@@ -1,0 +1,46 @@
+{
+  "id": "/Rami-Calculator/",
+  "name": "Rami Calculator - حاسبة الرامي",
+  "short_name": "Rami | رامي",
+  "description": "تطبيق لحساب نقاط لعبة الرمي بين الأصدقاء",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F3D2E",
+  "theme_color": "#0F3D2E",
+  "lang": "ar",
+  "dir": "rtl",
+  "translations": {
+    "ar": { "name": "حاسبة الرامي", "short_name": "حاسبة الرامي" },
+    "en": { "name": "Rami Calculator", "short_name": "Rami Calculator" },
+    "fr": { "name": "Calculatrice Rami", "short_name": "Calculatrice Rami" },
+    "es": { "name": "Calculadora de Rami", "short_name": "Calculadora de Rami" }
+  },
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

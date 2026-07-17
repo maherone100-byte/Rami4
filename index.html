@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title id="pageTitle">حاسبة الرامي</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="حاسبة الرامي">
+<meta name="theme-color" content="#0F3D2E">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt-1:#0F3D2E;
+    --felt-2:#0A2B20;
+    --gold:#D4AF37;
+    --gold-soft:#E8CE7B;
+    --cream:#F6F1E4;
+    --ink:#1C2420;
+    --win:#3F8F5C;
+    --lose:#B23A48;
+    --draw:#8A8370;
+    --card-radius:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 20% 0%, rgba(212,175,55,0.10), transparent 45%),
+      radial-gradient(circle at 100% 100%, rgba(212,175,55,0.08), transparent 40%),
+      linear-gradient(160deg, var(--felt-1), var(--felt-2) 70%);
+    background-attachment:fixed;
+    color:var(--cream);
+    font-family:'Cairo', sans-serif;
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+  .suit-row{
+    position:fixed; inset:0; z-index:-1; overflow:hidden; opacity:0.05;
+    font-size:120px; line-height:1; color:var(--gold); letter-spacing:40px; padding:20px;
+    pointer-events:none;
+  }
+  header{
+    padding:22px 18px 14px;
+    text-align:center;
+    position:relative;
+  }
+  header .brand{
+    font-family:'Lalezar', cursive;
+    font-size:2.5rem;
+    color:var(--gold);
+    letter-spacing:2px;
+    text-shadow:0 2px 12px rgba(212,175,55,0.35);
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  header .brand .suits{font-size:1.4rem; opacity:0.85;}
+  header .sub{
+    font-size:0.85rem; color:var(--gold-soft); opacity:0.75; margin-top:4px;
+    letter-spacing:1px;
+  }
+  .lang-switch{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:12px;
+  }
+  .lang-switch button{
+    padding:6px 12px; border-radius:20px; border:1px solid rgba(212,175,55,0.35);
+    background:rgba(255,255,255,0.04); color:var(--gold-soft); font-family:'Cairo', sans-serif;
+    font-size:0.74rem; font-weight:700; cursor:pointer; letter-spacing:0.5px;
+  }
+  .lang-switch button.active{
+    background:var(--gold); color:#1C2420; border-color:var(--gold);
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:0 12px;}
+
+  .panel{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(212,175,55,0.25);
+    border-radius:var(--card-radius);
+    backdrop-filter:blur(6px);
+    padding:14px;
+    margin-bottom:14px;
+    box-shadow:0 6px 24px rgba(0,0,0,0.25);
+  }
+  .panel h2{
+    margin:0 0 10px;
+    font-size:0.95rem;
+    color:var(--gold);
+    font-weight:700;
+    display:flex; align-items:center; gap:6px;
+  }
+
+  /* Players setup */
+  .players-list{display:flex; flex-direction:column; gap:8px;}
+  .player-row{display:flex; align-items:center; gap:8px;}
+  .player-row input[type=text]{
+    flex:1; background:rgba(0,0,0,0.25); border:1px solid rgba(212,175,55,0.3);
+    color:var(--cream); border-radius:10px; padding:10px 12px; font-family:inherit;
+    font-size:1rem; font-weight:600;
+  }
+  .player-row input[type=text]:focus{outline:none; border-color:var(--gold);}
+  .swatch{width:14px; height:14px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 2px rgba(255,255,255,0.15);}
+  .icon-btn{
+    background:transparent; border:none; color:var(--gold-soft); font-size:1.1rem;
+    padding:6px; cursor:pointer; opacity:0.75;
+  }
+  .icon-btn:active{opacity:1;}
+  .add-player-btn{
+    margin-top:10px; width:100%; padding:10px; border-radius:10px; border:1px dashed rgba(212,175,55,0.4);
+    background:transparent; color:var(--gold); font-family:inherit; font-weight:700; font-size:0.9rem; cursor:pointer;
+  }
+
+  /* Score table */
+  .table-scroll{border-radius:12px;}
+  table{width:100%; border-collapse:collapse; table-layout:fixed;}
+  th,td{padding:0; text-align:center;}
+  thead th{
+    position:sticky; top:0; z-index:2;
+    background:var(--felt-2);
+    padding:6px 1px;
+    font-size:0.68rem;
+    color:var(--gold-soft);
+    border-bottom:2px solid var(--gold);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  thead th.round-col{width:18px; color:var(--gold); opacity:0.7; font-weight:400;}
+  tbody td.round-num{
+    color:var(--gold-soft); opacity:0.6; font-size:0.7rem; font-weight:600;
+    padding:4px 1px;
+  }
+  tbody tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+  td.score-cell{padding:2px 1px; position:relative;}
+  td.score-cell .card-mark{
+    position:absolute; right:3px; top:50%; transform:translateY(-50%);
+    font-size:0.6rem; line-height:1; pointer-events:none;
+    filter:drop-shadow(0 0 2px rgba(0,0,0,0.6));
+  }
+  td.score-cell input{
+    width:100%; min-width:0; text-align:center; padding:7px 14px 7px 1px;
+    background:rgba(0,0,0,0.22); border:1px solid rgba(255,255,255,0.08);
+    border-radius:7px; color:var(--cream); font-family:inherit; font-weight:700;
+    font-size:0.82rem; direction:ltr;
+  }
+  td.score-cell input:focus{outline:none; border-color:var(--gold);}
+  td.score-cell input.neg{color:#8FD9A8;}
+  td.score-cell input.pos{color:#F2A0AA;}
+  tfoot td{
+    padding:8px 1px; font-weight:800; font-size:0.82rem;
+    border-top:2px solid var(--gold); background:rgba(212,175,55,0.08);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:ltr;
+  }
+  tfoot td.total-label{
+    direction:inherit;
+  }
+
+  .add-round-btn{
+    margin-top:12px; width:100%; padding:11px; border-radius:10px; border:1px solid rgba(212,175,55,0.35);
+    background:rgba(212,175,55,0.08); color:var(--gold); font-family:inherit; font-weight:700; cursor:pointer;
+  }
+  .save-round-btn{
+    margin-top:8px; width:100%; padding:11px; border-radius:10px; border:1px solid rgba(63,143,92,0.45);
+    background:rgba(63,143,92,0.12); color:#8FD9A8; font-family:inherit; font-weight:700; cursor:pointer;
+  }
+
+  /* History */
+  .history-list{display:flex; flex-direction:column; gap:10px;}
+  .history-entry{
+    background:rgba(0,0,0,0.2); border:1px solid rgba(212,175,55,0.2); border-radius:12px; padding:10px 8px;
+  }
+  .history-head{display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;}
+  .history-date{font-size:0.78rem; color:var(--gold-soft); opacity:0.85;}
+  .history-winner{font-size:0.85rem; font-weight:700; color:var(--gold); display:flex; align-items:center; gap:4px;}
+  .history-loser{font-size:0.78rem; font-weight:600; color:#F2A0AA; display:flex; align-items:center; gap:4px; opacity:0.85; margin-top:2px;}
+  .history-del{background:transparent; border:none; color:rgba(242,160,170,0.8); font-size:1rem; cursor:pointer; padding:2px 6px;}
+  .history-details{
+    margin-top:10px; padding-top:10px; border-top:1px dashed rgba(212,175,55,0.25);
+  }
+  /* Shared table style for standings + history (identical dimensions) */
+  .stats-table{width:100%; border-collapse:collapse; font-size:0.78rem; table-layout:fixed;}
+  .stats-table th{
+    padding:5px 2px; font-size:0.62rem; color:var(--gold-soft); font-weight:600;
+    text-align:center; border-bottom:2px solid var(--gold);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .stats-table td{padding:7px 2px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .stats-table td:nth-child(2){text-align:start; font-weight:700;}
+  .stats-table td:not(:nth-child(2)){direction:ltr;}
+  .stats-table tr:not(:last-child) td{border-bottom:1px solid rgba(255,255,255,0.06);}
+  .stats-table th.t-rank, .stats-table td.t-rank{
+    width:18px; font-weight:800; color:var(--gold-soft); opacity:0.8;
+  }
+  .stats-table th.t-total, .stats-table td.t-total{font-weight:800; color:var(--cream); width:42px;}
+  .stats-table th.t-total{font-size:0.5rem;}
+  .stats-table td.t-total{font-size:0.85rem;}
+
+  .standings-table tr.first td{background:rgba(212,175,55,0.12);}
+  .standings-table tr.first td:first-child{border-radius:8px 0 0 8px;}
+  .standings-table tr.first td:last-child{border-radius:0 8px 8px 0;}
+  .standings-table tr.first td.t-rank{color:var(--gold); opacity:1;}
+
+  .history-table tr.rank-first td:first-child{color:var(--gold);}
+  .history-table tr.rank-last td:first-child{color:#F2A0AA;}
+  .history-row .hname{font-weight:700;}
+  .history-toggle-icon{font-size:1.3rem; color:var(--gold-soft); opacity:0.85; line-height:1; display:inline-block; transition:transform 0.2s ease;}
+  .crown{font-size:1rem;}
+  .loser-icon{font-size:1rem;}
+
+  #winnerPanel{text-align:center; padding:10px;}
+  .winner-banner{
+    display:inline-flex; flex-direction:column; align-items:center; gap:6px;
+    padding:12px 24px; border-radius:14px;
+    background:linear-gradient(135deg, rgba(212,175,55,0.22), rgba(212,175,55,0.05));
+    border:1px solid var(--gold);
+    max-width:100%;
+  }
+  .winner-banner .win-line, .winner-banner .lose-line{
+    display:flex; align-items:baseline; gap:8px; white-space:nowrap;
+  }
+  .winner-banner .label{font-size:0.72rem; color:var(--gold-soft); letter-spacing:1px; flex-shrink:0;}
+  .winner-banner .lose-line .label{color:rgba(242,160,170,0.85);}
+  .winner-banner .name{
+    font-family:'Cairo', sans-serif; font-size:1.2rem; font-weight:800; line-height:1;
+  }
+  .winner-banner .win-line .name{color:var(--gold);}
+  .winner-banner .lose-line .name{color:#F2A0AA;}
+  .winner-banner .score{
+    font-family:'Cairo', sans-serif; font-weight:800; font-size:1.05rem; color:var(--cream);
+    background:rgba(255,255,255,0.1); padding:1px 9px; border-radius:7px; letter-spacing:0.5px;
+    direction:ltr; display:inline-block;
+  }
+
+  .actions{display:flex; gap:10px; margin-top:4px;}
+  .actions button{
+    flex:1; padding:12px; border-radius:12px; border:none; font-family:inherit; font-weight:700;
+    font-size:0.9rem; cursor:pointer;
+  }
+  .btn-danger{background:rgba(178,58,72,0.18); color:#F2A0AA; border:1px solid rgba(178,58,72,0.4) !important;}
+  .btn-install{background:var(--gold); color:#1C2420;}
+  .btn-history{background:rgba(212,175,55,0.12); color:var(--gold); border:1px solid rgba(212,175,55,0.4) !important;}
+
+  /* Draw / lottery */
+  .draw-box{display:flex; flex-direction:column; align-items:center; gap:14px;}
+  .draw-result{
+    width:100%; min-height:64px; border-radius:14px;
+    background:radial-gradient(circle at 50% 30%, rgba(212,175,55,0.14), rgba(0,0,0,0.2));
+    border:1px dashed rgba(212,175,55,0.4);
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:10px 14px;
+  }
+  .draw-placeholder{font-size:0.8rem; color:rgba(246,241,228,0.5); font-weight:600;}
+  .draw-result .draw-name{
+    font-family:'Cairo', sans-serif; font-weight:800; font-size:1.4rem; color:var(--gold);
+    animation:popIn 0.25s ease;
+  }
+  .draw-result.settled{border-style:solid; border-color:var(--gold); background:rgba(212,175,55,0.14);}
+  .draw-btn{
+    width:100%; padding:13px; border-radius:12px; border:none;
+    background:linear-gradient(135deg, var(--gold), var(--gold-soft));
+    color:#1C2420; font-family:inherit; font-weight:800; font-size:0.95rem; cursor:pointer;
+    box-shadow:0 4px 14px rgba(212,175,55,0.25);
+  }
+  .draw-btn:active{transform:scale(0.98);}
+
+  .back-btn{
+    width:100%; padding:10px; border-radius:10px; border:1px solid rgba(212,175,55,0.35);
+    background:rgba(255,255,255,0.04); color:var(--gold-soft); font-family:inherit; font-weight:700;
+    font-size:0.9rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+
+  .install-tip{
+    font-size:0.78rem; color:rgba(246,241,228,0.65); text-align:center; line-height:1.6; padding:0 10px;
+  }
+  .install-tip b{color:var(--gold-soft);}
+
+  footer{text-align:center; font-size:0.7rem; color:rgba(246,241,228,0.35); margin-top:20px;}
+
+  /* Modals */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;
+    animation:fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  .modal-box{
+    background:linear-gradient(160deg, var(--felt-1), var(--felt-2) 80%);
+    border:1px solid var(--gold); border-radius:18px;
+    padding:24px 20px 18px; max-width:320px; width:100%; text-align:center;
+    box-shadow:0 12px 40px rgba(0,0,0,0.5);
+    animation:popIn 0.18s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn{from{transform:scale(0.85); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .modal-icon{font-size:2rem; margin-bottom:8px;}
+  .modal-message{color:var(--cream); font-size:0.95rem; font-weight:700; line-height:1.5; margin-bottom:18px;}
+  .modal-actions{display:flex; gap:10px;}
+  .modal-btn{
+    flex:1; padding:11px; border-radius:12px; border:none; font-family:inherit; font-weight:700;
+    font-size:0.88rem; cursor:pointer;
+  }
+  .modal-btn-cancel{background:rgba(255,255,255,0.08); color:var(--gold-soft); border:1px solid rgba(212,175,55,0.3) !important;}
+  .modal-btn-yes{background:#B23A48; color:#fff;}
+  .modal-btn-ok{background:var(--gold); color:#1C2420;}
+</style>
+</head>
+<body>
+<div class="suit-row">♠ ♥ ♦ ♣ ♠ ♥ ♦ ♣ ♠ ♥ ♦ ♣ ♠ ♥ ♦ ♣</div>
+
+<header>
+  <div class="brand"><span class="suits">♣</span> <span data-i18n="brand">حاسبة الرامي</span> <span class="suits">♦</span></div>
+  <div class="sub" id="todayDate"></div>
+  <div class="lang-switch" id="langSwitch">
+    <button data-lang="ar">العربية</button>
+    <button data-lang="en">English</button>
+    <button data-lang="fr">Français</button>
+    <button data-lang="es">Español</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div id="mainPage">
+  <div class="panel" id="winnerPanel" style="display:none;"></div>
+
+  <div class="panel">
+    <h2><span data-i18n="playersTitle">👥 اللاعبون</span></h2>
+    <div class="players-list" id="playersList"></div>
+    <button class="add-player-btn" id="addPlayerBtn" data-i18n="addPlayer">+ إضافة لاعب</button>
+  </div>
+
+  <div class="panel">
+    <h2><span data-i18n="roundsTitle">🃏 الجولات</span></h2>
+    <div class="table-scroll">
+      <table id="scoreTable">
+        <thead><tr id="theadRow"><th class="round-col">#</th></tr></thead>
+        <tbody id="tbody"></tbody>
+        <tfoot><tr id="tfootRow"><td class="total-label"></td></tr></tfoot>
+      </table>
+    </div>
+    <button class="add-round-btn" id="addRoundBtn" data-i18n="addRound">+ إضافة جولة</button>
+    <button class="save-round-btn" id="saveRoundBtn" data-i18n="saveRound">💾 تسجيل الجولة</button>
+  </div>
+
+  <div class="panel">
+    <h2><span data-i18n="standingsTitle">🏆 الترتيب</span></h2>
+    <table class="stats-table standings-table" id="standingsTable">
+      <thead><tr><th class="t-rank">#</th><th data-i18n="playerCol">اللاعب</th><th>✅</th><th>❌</th><th>(=0)</th><th>🃏</th><th class="t-total" data-i18n="total">المجموع</th></tr></thead>
+      <tbody id="standings"></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="actions">
+      <button class="btn-danger" id="resetBtn" data-i18n="newGame">🔄 لعبة جديدة</button>
+      <button class="btn-history" id="goHistoryBtn" data-i18n="viewHistory">📜 السجل</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span data-i18n="drawTitle">🎲 قرعة توزيع البطاقات</span></h2>
+    <div class="draw-box">
+      <div class="draw-result" id="drawResult">
+        <span class="draw-placeholder" data-i18n="drawPlaceholder">اضغط للسحب وتحديد أول من يوزع</span>
+      </div>
+      <button class="draw-btn" id="drawBtn" data-i18n="drawBtn">🎲 سحب القرعة</button>
+    </div>
+  </div>
+
+  <footer data-i18n="footerNote">بياناتك بتتحفظ تلقائياً على جهازك</footer>
+</div>
+
+<div id="historyPage" style="display:none;">
+  <div class="panel">
+    <button class="back-btn" id="backHomeBtn">🏠 <span data-i18n="backToMain">الرئيسية</span></button>
+  </div>
+  <div class="panel">
+    <h2><span data-i18n="historyTitle">📜 سجل الجولات المحفوظة</span></h2>
+    <div class="history-list" id="historyList"></div>
+    <div id="noHistoryMsg" data-i18n="noHistoryYet" style="display:none; text-align:center; padding:20px 10px; color:rgba(246,241,228,0.5); font-size:0.85rem;">لا يوجد أي جولات محفوظة بعد</div>
+  </div>
+</div>
+
+</div>
+
+<div class="modal-overlay" id="confirmModal" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-icon" id="confirmModalIcon">🗑️</div>
+    <div class="modal-message" id="confirmModalMessage"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" id="confirmModalCancel" data-i18n="btnCancel">إلغاء</button>
+      <button class="modal-btn modal-btn-yes" id="confirmModalYes" data-i18n="btnYes">نعم، احذف</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="infoModal" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-icon" id="infoModalIcon">✅</div>
+    <div class="modal-message" id="infoModalMessage"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-ok" id="infoModalOk" data-i18n="btnOk">حسناً</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PALETTE = ['#D4AF37','#8FD9A8','#F2A0AA','#7EC8E3','#E39B5C','#C89EDB'];
+const STORAGE_KEY = 'rami_calculator_state_v1';
+const LANG_KEY = 'rami_calculator_lang';
+const MIGRATION_KEY = 'rami_calculator_migrated_rounds5';
+
+const I18N = {
+  ar: {
+    dir: 'rtl', locale: 'ar-EG',
+    brand: 'حاسبة الرامي',
+    playersTitle: '👥 اللاعبون',
+    addPlayer: '+ إضافة لاعب',
+    playerPlaceholder: 'اسم اللاعب',
+    playerFallback: 'لاعب',
+    playerCol: 'اللاعب',
+    roundsTitle: '🃏 الجولات',
+    total: 'المجموع',
+    addRound: '+ إضافة جولة',
+    saveRound: '💾 تسجيل الجولة',
+    standingsTitle: '🏆 الترتيب',
+    historyTitle: '📜 سجل الجولات المحفوظة',
+    newGame: '🔄 لعبة جديدة',
+    installTitle: '📲 تثبيت التطبيق على الهاتف',
+    installIos: '<b>آيفون (Safari):</b> اضغط زر المشاركة ⬆️ ثم "Add to Home Screen".',
+    installAndroid: '<b>أندرويد (Chrome):</b> اضغط القائمة ⋮ ثم "تثبيت التطبيق" / "Add to Home screen".',
+    installNote: 'بعدها هتلاقي أيقونة ♠ حاسبة الرامي على شاشتك الرئيسية زي أي تطبيق عادي.',
+    footerNote: 'بياناتك بتتحفظ تلقائياً على جهازك',
+    currentWinner: '🏆 الفائز حالياً',
+    loser: '😢 الخاسر حالياً',
+    maxPlayers: 'أقصى عدد لاعبين هو 5',
+    saveNoScores: 'لا توجد نقاط مسجلة بعد. يرجى إدخال نتيجة أولاً قبل حفظ الجولة.',
+    saveSuccess: 'تم تسجيل الجولة بتاريخها في السجل بنجاح.',
+    confirmDeleteHistory: 'هل تريد حذف هذه الجولة من السجل؟',
+    confirmDeletePlayer: 'هل تريد حذف هذا اللاعب؟',
+    btnYes: 'نعم، احذف',
+    btnYesReset: 'نعم، ابدأ من جديد',
+    drawTitle: '🎲 قرعة توزيع البطاقات',
+    drawPlaceholder: 'اضغط للسحب وتحديد أول من يوزع',
+    drawBtn: '🎲 سحب القرعة',
+    drawResultPrefix: 'سيبدأ التوزيع:',
+    btnCancel: 'إلغاء',
+    btnOk: 'حسناً',
+    confirmReset: 'هل تريد بدء لعبة جديدة؟ سيتم مسح كل النقاط الحالية.',
+    viewHistory: '📜 السجل',
+    backToMain: 'الرئيسية',
+    noHistoryYet: 'لا يوجد أي جولات محفوظة بعد'
+  },
+  en: {
+    dir: 'ltr', locale: 'en-US',
+    brand: 'Rami Calculator',
+    playersTitle: '👥 Players',
+    addPlayer: '+ Add Player',
+    playerPlaceholder: 'Player name',
+    playerFallback: 'Player',
+    playerCol: 'Player',
+    roundsTitle: '🃏 Rounds',
+    total: 'Total',
+    addRound: '+ Add Round',
+    saveRound: '💾 Save Round',
+    standingsTitle: '🏆 Standings',
+    historyTitle: '📜 Saved Rounds History',
+    newGame: '🔄 New Game',
+    installTitle: '📲 Install App on Your Phone',
+    installIos: '<b>iPhone (Safari):</b> tap the Share button ⬆️ then "Add to Home Screen".',
+    installAndroid: '<b>Android (Chrome):</b> tap the menu ⋮ then "Install app" / "Add to Home screen".',
+    installNote: 'You\'ll then find the ♠ Rami Calculator icon on your home screen, just like any other app.',
+    footerNote: 'Your data is saved automatically on your device',
+    currentWinner: '🏆 Current Winner',
+    loser: '😢 Current Loser',
+    maxPlayers: 'Maximum number of players is 5',
+    saveNoScores: 'No scores recorded yet — enter a result first before saving the round.',
+    saveSuccess: 'The round has been saved with its date in the history.',
+    confirmDeleteHistory: 'Delete this round from the history?',
+    confirmDeletePlayer: 'Do you want to delete this player?',
+    btnYes: 'Yes, delete',
+    btnYesReset: 'Yes, start new',
+    drawTitle: '🎲 Card Dealer Draw',
+    drawPlaceholder: 'Tap to draw and pick who deals first',
+    drawBtn: '🎲 Draw',
+    drawResultPrefix: 'Will deal first:',
+    btnCancel: 'Cancel',
+    btnOk: 'OK',
+    confirmReset: 'Are you sure you want to start a new game? All current scores will be cleared.',
+    viewHistory: '📜 History',
+    backToMain: 'Home',
+    noHistoryYet: 'No saved rounds yet'
+  },
+  fr: {
+    dir: 'ltr', locale: 'fr-FR',
+    brand: 'Calculatrice Rami',
+    playersTitle: '👥 Joueurs',
+    addPlayer: '+ Ajouter un joueur',
+    playerPlaceholder: 'Nom du joueur',
+    playerFallback: 'Joueur',
+    playerCol: 'Joueur',
+    roundsTitle: '🃏 Manches',
+    total: 'Total',
+    addRound: '+ Ajouter une manche',
+    saveRound: '💾 Enregistrer la manche',
+    standingsTitle: '🏆 Classement',
+    historyTitle: '📜 Historique des manches enregistrées',
+    newGame: '🔄 Nouvelle partie',
+    installTitle: '📲 Installer l\'application sur votre téléphone',
+    installIos: '<b>iPhone (Safari) :</b> appuyez sur le bouton Partager ⬆️ puis "Sur l\'écran d\'accueil".',
+    installAndroid: '<b>Android (Chrome) :</b> appuyez sur le menu ⋮ puis "Installer l\'application" / "Ajouter à l\'écran d\'accueil".',
+    installNote: 'Vous trouverez ensuite l\'icône ♠ Calculatrice Rami sur votre écran d\'accueil, comme n\'importe quelle autre application.',
+    footerNote: 'Vos données sont enregistrées automatiquement sur votre appareil',
+    currentWinner: '🏆 Gagnant actuel',
+    loser: '😢 Perdant actuel',
+    maxPlayers: 'Le nombre maximum de joueurs est 5',
+    saveNoScores: 'Aucun score enregistré pour l\'instant — entrez un résultat avant d\'enregistrer la manche.',
+    saveSuccess: 'La manche a été enregistrée avec sa date dans l\'historique.',
+    confirmDeleteHistory: 'Supprimer cette manche de l\'historique ?',
+    confirmDeletePlayer: 'Voulez-vous supprimer ce joueur ?',
+    btnYes: 'Oui, supprimer',
+    btnYesReset: 'Oui, recommencer',
+    drawTitle: '🎲 Tirage du distributeur',
+    drawPlaceholder: 'Appuyez pour tirer au sort qui distribue en premier',
+    drawBtn: '🎲 Tirer au sort',
+    drawResultPrefix: 'Distribuera en premier :',
+    btnCancel: 'Annuler',
+    btnOk: 'D\'accord',
+    confirmReset: 'Voulez-vous vraiment démarrer une nouvelle partie ? Tous les scores actuels seront effacés.',
+    viewHistory: '📜 Historique',
+    backToMain: 'Accueil',
+    noHistoryYet: 'Aucune manche enregistrée pour le moment'
+  },
+  es: {
+    dir: 'ltr', locale: 'es-ES',
+    brand: 'Calculadora de Rami',
+    playersTitle: '👥 Jugadores',
+    addPlayer: '+ Añadir jugador',
+    playerPlaceholder: 'Nombre del jugador',
+    playerFallback: 'Jugador',
+    playerCol: 'Jugador',
+    roundsTitle: '🃏 Rondas',
+    total: 'Total',
+    addRound: '+ Añadir ronda',
+    saveRound: '💾 Guardar ronda',
+    standingsTitle: '🏆 Clasificación',
+    historyTitle: '📜 Historial de rondas guardadas',
+    newGame: '🔄 Nueva partida',
+    installTitle: '📲 Instalar la app en tu teléfono',
+    installIos: '<b>iPhone (Safari):</b> toca el botón de compartir ⬆️ y luego "Añadir a pantalla de inicio".',
+    installAndroid: '<b>Android (Chrome):</b> toca el menú ⋮ y luego "Instalar aplicación" / "Añadir a pantalla de inicio".',
+    installNote: 'Luego encontrarás el icono ♠ Calculadora de Rami en tu pantalla de inicio, como cualquier otra app.',
+    footerNote: 'Tus datos se guardan automáticamente en tu dispositivo',
+    currentWinner: '🏆 Ganador actual',
+    loser: '😢 Perdedor actual',
+    maxPlayers: 'El número máximo de jugadores es 5',
+    saveNoScores: 'Todavía no hay puntuaciones registradas — introduce un resultado antes de guardar la ronda.',
+    saveSuccess: 'La ronda se ha guardado con su fecha en el historial.',
+    confirmDeleteHistory: '¿Eliminar esta ronda del historial?',
+    confirmDeletePlayer: '¿Quieres eliminar a este jugador?',
+    btnYes: 'Sí, eliminar',
+    btnYesReset: 'Sí, empezar de nuevo',
+    drawTitle: '🎲 Sorteo del repartidor',
+    drawPlaceholder: 'Toca para sortear quién reparte primero',
+    drawBtn: '🎲 Sortear',
+    drawResultPrefix: 'Repartirá primero:',
+    btnCancel: 'Cancelar',
+    btnOk: 'De acuerdo',
+    confirmReset: '¿Seguro que quieres empezar una partida nueva? Se borrarán todas las puntuaciones actuales.',
+    viewHistory: '📜 Historial',
+    backToMain: 'Inicio',
+    noHistoryYet: 'Todavía no hay rondas guardadas'
+  }
+};
+
+let currentLang = localStorage.getItem(LANG_KEY) || 'ar';
+
+function t(key){
+  return (I18N[currentLang] && I18N[currentLang][key]) || I18N.ar[key] || key;
+}
+
+function defaultState(){
+  return {
+    players: [
+      {name:'عادل'}, {name:'خالد'}, {name:'أسامة'}
+    ],
+    rounds: Array.from({length:5}, () => []),
+    history: []
+  };
+}
+
+let state = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    if(!parsed.players || !parsed.rounds) return defaultState();
+    if(!parsed.history) parsed.history = [];
+    // One-time migration: trim any previously saved rounds beyond 5 down to 5
+    if(!localStorage.getItem(MIGRATION_KEY)){
+      if(parsed.rounds.length > 5) parsed.rounds = parsed.rounds.slice(0, 5);
+      localStorage.setItem(MIGRATION_KEY, '1');
+    }
+    return parsed;
+  }catch(e){ return defaultState(); }
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function setTodayDate(){
+  const d = new Date();
+  const opts = {weekday:'long', year:'numeric', month:'long', day:'numeric'};
+  document.getElementById('todayDate').textContent = d.toLocaleDateString(I18N[currentLang].locale, opts);
+}
+
+function applyStaticTranslations(){
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = I18N[currentLang].dir;
+  document.getElementById('pageTitle').textContent = t('brand');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  document.querySelectorAll('#langSwitch button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+  });
+}
+
+function setLanguage(lang){
+  currentLang = lang;
+  localStorage.setItem(LANG_KEY, lang);
+  applyStaticTranslations();
+  setTodayDate();
+  renderAll();
+}
+
+function ensureRoundLength(){
+  state.rounds.forEach(r => {
+    while(r.length < state.players.length) r.push(null);
+    while(r.length > state.players.length) r.pop();
+  });
+}
+
+function computeStats(){
+  ensureRoundLength();
+  const roundMarks = computeRoundMarks();
+  const markCounts = state.players.map(() => 0);
+  roundMarks.forEach(m => { if(m !== -1) markCounts[m]++; });
+  const stats = state.players.map((p, idx) => {
+    let total = 0, win=0, lost=0, draw=0;
+    state.rounds.forEach(r => {
+      const v = r[idx];
+      if(v === null || v === undefined || v === '') return;
+      const n = parseFloat(v);
+      if(isNaN(n)) return;
+      total += n;
+      if(n < 0) win++;
+      else if(n > 0) lost++;
+      else draw++;
+    });
+    return {name:p.name || `${t('playerFallback')} ${idx+1}`, total, win, lost, draw, marks: markCounts[idx], idx};
+  });
+  const ranked = [...stats].sort((a,b) => a.total - b.total);
+  ranked.forEach((s, i) => s.rank = i+1);
+  return {stats, ranked};
+}
+
+function renderPlayers(){
+  const list = document.getElementById('playersList');
+  list.innerHTML = '';
+  state.players.forEach((p, idx) => {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <span class="swatch" style="background:${PALETTE[idx % PALETTE.length]}"></span>
+      <input type="text" value="${escapeAttr(p.name)}" placeholder="${t('playerPlaceholder')}" data-idx="${idx}">
+      ${state.players.length > 2 ? `<button class="icon-btn" data-remove="${idx}">✕</button>` : ''}
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('input[type=text]').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const idx = +e.target.dataset.idx;
+      state.players[idx].name = e.target.value;
+      save();
+      renderTable();
+      renderStandings();
+    });
+  });
+  list.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = +e.target.dataset.remove;
+      showConfirmModal(t('confirmDeletePlayer'), () => {
+        state.players.splice(idx, 1);
+        state.rounds.forEach(r => r.splice(idx, 1));
+        save();
+        renderAll();
+      });
+    });
+  });
+}
+
+function escapeAttr(s){
+  return (s || '').replace(/"/g, '&quot;');
+}
+
+function computeRoundMarks(){
+  const marks = [];
+  state.rounds.forEach((round, rIdx) => {
+    const vals = round.map(v => (v !== null && v !== undefined && v !== '' && !isNaN(v)) ? parseFloat(v) : null);
+    const filledIdx = vals.reduce((arr, v, i) => { if(v !== null) arr.push(i); return arr; }, []);
+    if(filledIdx.length === 0){ marks.push(-1); return; }
+    const maxVal = Math.max(...filledIdx.map(i => vals[i]));
+    if(maxVal < 0){ marks.push(-1); return; }
+    const tied = filledIdx.filter(i => vals[i] === maxVal);
+    let mark;
+    if(tied.length === 1){
+      mark = tied[0];
+    } else {
+      const prevMark = rIdx > 0 ? marks[rIdx - 1] : -1;
+      if(prevMark !== -1 && tied.includes(prevMark)){
+        const pos = tied.indexOf(prevMark);
+        mark = tied[(pos + 1) % tied.length];
+      } else {
+        mark = tied[0];
+      }
+    }
+    marks.push(mark);
+  });
+  return marks;
+}
+
+function renderTable(){
+  const thead = document.getElementById('theadRow');
+  thead.innerHTML = '<th class="round-col">#</th>';
+  state.players.forEach((p, idx) => {
+    const th = document.createElement('th');
+    th.innerHTML = `<span style="color:${PALETTE[idx % PALETTE.length]}">${escapeHtml(p.name || t('playerFallback'))}</span>`;
+    thead.appendChild(th);
+  });
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  ensureRoundLength();
+  const roundMarks = computeRoundMarks();
+  state.rounds.forEach((round, rIdx) => {
+    const tr = document.createElement('tr');
+    const tdNum = document.createElement('td');
+    tdNum.className = 'round-num';
+    tdNum.textContent = rIdx + 1;
+    tr.appendChild(tdNum);
+    state.players.forEach((p, pIdx) => {
+      const td = document.createElement('td');
+      td.className = 'score-cell';
+      const val = round[pIdx];
+      const cls = (val !== null && val !== undefined && val !== '' && !isNaN(val)) ? (parseFloat(val) < 0 ? 'neg' : (parseFloat(val) > 0 ? 'pos' : '')) : '';
+      const isMax = roundMarks[rIdx] === pIdx;
+      td.innerHTML = `<input type="number" inputmode="numeric" class="${cls}" value="${val !== null && val !== undefined ? val : ''}" data-round="${rIdx}" data-player="${pIdx}">${isMax ? '<span class="card-mark">🃏</span>' : ''}`;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+function updateRoundMarks(){
+  const roundMarks = computeRoundMarks();
+  document.querySelectorAll('#tbody tr').forEach((tr, rIdx) => {
+    const cells = tr.querySelectorAll('td.score-cell');
+    cells.forEach((td, pIdx) => {
+      let markSpan = td.querySelector('.card-mark');
+      if(roundMarks[rIdx] === pIdx){
+        if(!markSpan){
+          markSpan = document.createElement('span');
+          markSpan.className = 'card-mark';
+          markSpan.textContent = '🃏';
+          td.appendChild(markSpan);
+        }
+      } else if(markSpan){
+        markSpan.remove();
+      }
+    });
+  });
+}
+
+  tbody.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const r = +e.target.dataset.round;
+      const p = +e.target.dataset.player;
+      const v = e.target.value;
+      state.rounds[r][p] = v === '' ? null : v;
+      e.target.classList.remove('neg','pos');
+      if(v !== '' && !isNaN(v)){
+        e.target.classList.add(parseFloat(v) < 0 ? 'neg' : (parseFloat(v) > 0 ? 'pos' : ''));
+      }
+      save();
+      updateRoundMarks();
+      renderTotals();
+      renderStandings();
+    });
+  });
+
+  renderTotals();
+}
+
+function renderTotals(){
+  const {stats} = computeStats();
+  const tfoot = document.getElementById('tfootRow');
+  tfoot.innerHTML = `<td class="total-label"></td>`;
+  stats.forEach((s, idx) => {
+    const td = document.createElement('td');
+    td.style.color = PALETTE[idx % PALETTE.length];
+    td.textContent = s.total;
+    tfoot.appendChild(td);
+  });
+}
+
+function renderStandings(){
+  const {ranked} = computeStats();
+  const box = document.getElementById('standings');
+  box.innerHTML = '';
+  ranked.forEach((s, i) => {
+    const row = document.createElement('tr');
+    row.className = (i === 0 ? 'first' : '');
+    row.innerHTML = `
+      <td class="t-rank">${s.rank}</td>
+      <td style="color:${PALETTE[s.idx % PALETTE.length]}">${escapeHtml(s.name)}</td>
+      <td>${s.win}</td>
+      <td>${s.lost}</td>
+      <td>${s.draw}</td>
+      <td>${s.marks}</td>
+      <td class="t-total">${s.total}</td>
+    `;
+    box.appendChild(row);
+  });
+
+  // winner banner
+  const wp = document.getElementById('winnerPanel');
+  const hasScores = state.rounds.some(r => r.some(v => v !== null && v !== undefined && v !== ''));
+  if(ranked.length && hasScores){
+    const winner = ranked[0];
+    const loser = ranked[ranked.length - 1];
+    wp.style.display = '';
+    wp.innerHTML = `
+      <div class="winner-banner">
+        <div class="win-line"><span class="label">${t('currentWinner')}</span><span class="name">${escapeHtml(winner.name)}</span><span class="score">${winner.total}</span></div>
+        <div class="lose-line"><span class="label">${t('loser')}</span><span class="name">${escapeHtml(loser.name)}</span><span class="score">${loser.total}</span></div>
+      </div>
+    `;
+  } else {
+    wp.style.display = 'none';
+  }
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s || '';
+  return div.innerHTML;
+}
+
+function formatHistoryDate(entry){
+  const opts = {weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'};
+  try{
+    if(entry.dateISO) return new Date(entry.dateISO).toLocaleString(I18N[currentLang].locale, opts);
+  }catch(e){}
+  return entry.dateLabel || '';
+}
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  const emptyMsg = document.getElementById('noHistoryMsg');
+  if(!state.history.length){
+    list.innerHTML = '';
+    emptyMsg.style.display = '';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+  list.innerHTML = '';
+  state.history.forEach(entry => {
+    const ranked = [...entry.players].sort((a,b) => a.total - b.total);
+    const winner = ranked[0];
+    const loser = ranked[ranked.length - 1];
+    const div = document.createElement('div');
+    div.className = 'history-entry';
+    div.innerHTML = `
+      <div class="history-head" data-toggle="${entry.id}">
+        <div>
+          <div class="history-winner">👑 ${escapeHtml(winner.name)}</div>
+          ${ranked.length > 1 ? `<div class="history-loser">😢 ${escapeHtml(loser.name)}</div>` : ''}
+          <div class="history-date">${escapeHtml(formatHistoryDate(entry))}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="history-toggle-icon" data-icon="${entry.id}" style="transform:rotate(90deg);">→</span>
+          <button class="history-del" data-del="${entry.id}">✕</button>
+        </div>
+      </div>
+      <div class="history-details" id="details-${entry.id}" style="display:none;">
+        <table class="stats-table history-table">
+          <thead>
+            <tr><th class="t-rank">#</th><th>${t('playerCol')}</th><th>✅</th><th>❌</th><th>(=0)</th><th>🃏</th><th class="t-total">${t('total')}</th></tr>
+          </thead>
+          <tbody>
+            ${ranked.map((p, i) => `
+              <tr class="${i === 0 ? 'rank-first' : ''}${i === ranked.length - 1 && ranked.length > 1 ? 'rank-last' : ''}">
+                <td class="t-rank">${i + 1}</td>
+                <td>${escapeHtml(p.name)}</td>
+                <td>${p.win}</td>
+                <td>${p.lost}</td>
+                <td>${p.draw}</td>
+                <td>${p.marks || 0}</td>
+                <td class="t-total">${p.total}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+
+  list.querySelectorAll('[data-toggle]').forEach(head => {
+    head.addEventListener('click', (e) => {
+      if(e.target.closest('[data-del]')) return;
+      const id = head.dataset.toggle;
+      const details = document.getElementById('details-' + id);
+      const icon = list.querySelector(`[data-icon="${id}"]`);
+      const open = details.style.display !== 'none';
+      details.style.display = open ? 'none' : '';
+      icon.style.transform = open ? 'rotate(90deg)' : 'rotate(-90deg)';
+    });
+  });
+  list.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = +btn.dataset.del;
+      showConfirmModal(t('confirmDeleteHistory'), () => {
+        state.history = state.history.filter(h => h.id !== id);
+        save();
+        renderHistory();
+      });
+    });
+  });
+}
+
+function renderAll(){
+  renderPlayers();
+  renderTable();
+  renderStandings();
+  renderHistory();
+}
+
+document.getElementById('addPlayerBtn').addEventListener('click', () => {
+  if(state.players.length >= 5){ showInfoModal(t('maxPlayers'), '⚠️'); return; }
+  state.players.push({name: `${t('playerFallback')} ${state.players.length + 1}`});
+  state.rounds.forEach(r => r.push(null));
+  save();
+  renderAll();
+});
+
+document.getElementById('addRoundBtn').addEventListener('click', () => {
+  state.rounds.push(state.players.map(() => null));
+  save();
+  renderTable();
+});
+
+document.getElementById('saveRoundBtn').addEventListener('click', () => {
+  const {stats} = computeStats();
+  const hasScores = state.rounds.some(r => r.some(v => v !== null && v !== undefined && v !== ''));
+  if(!hasScores){
+    showInfoModal(t('saveNoScores'), '⚠️');
+    return;
+  }
+  const now = new Date();
+  const entry = {
+    id: now.getTime(),
+    dateISO: now.toISOString(),
+    dateLabel: now.toLocaleString(I18N[currentLang].locale, {weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'}),
+    players: stats.map(s => ({name:s.name, total:s.total, win:s.win, lost:s.lost, draw:s.draw, marks:s.marks}))
+  };
+  state.history.unshift(entry);
+  save();
+  renderHistory();
+  showInfoModal(t('saveSuccess'), '✅');
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  showConfirmModal(t('confirmReset'), () => {
+    const names = state.players.map(p => ({name: p.name}));
+    state = {players: names, rounds: Array.from({length:5}, () => names.map(() => null)), history: state.history};
+    save();
+    renderAll();
+  }, '🔄', t('btnYesReset'));
+});
+
+function showPage(page){
+  document.getElementById('mainPage').style.display = page === 'main' ? '' : 'none';
+  document.getElementById('historyPage').style.display = page === 'history' ? '' : 'none';
+  window.scrollTo(0, 0);
+}
+
+let drawInProgress = false;
+document.getElementById('drawBtn').addEventListener('click', () => {
+  if(drawInProgress) return;
+  if(state.players.length < 2) return;
+  drawInProgress = true;
+  const names = state.players.map((p, idx) => p.name || `${t('playerFallback')} ${idx+1}`);
+  const colors = state.players.map((p, idx) => PALETTE[idx % PALETTE.length]);
+  const resultEl = document.getElementById('drawResult');
+  resultEl.classList.remove('settled');
+  let ticks = 0;
+  const maxTicks = 14;
+  const timer = setInterval(() => {
+    const r = Math.floor(Math.random() * names.length);
+    resultEl.innerHTML = `<span class="draw-name" style="color:${colors[r]}">${escapeHtml(names[r])}</span>`;
+    ticks++;
+    if(ticks >= maxTicks){
+      clearInterval(timer);
+      const finalIdx = Math.floor(Math.random() * names.length);
+      resultEl.innerHTML = `<span class="draw-name" style="color:${colors[finalIdx]}">🃏 ${escapeHtml(names[finalIdx])}</span>`;
+      resultEl.classList.add('settled');
+      drawInProgress = false;
+    }
+  }, 90);
+});
+
+document.getElementById('goHistoryBtn').addEventListener('click', () => {
+  renderHistory();
+  showPage('history');
+});
+
+document.getElementById('backHomeBtn').addEventListener('click', () => {
+  showPage('main');
+});
+
+let confirmModalCallback = null;
+
+function showConfirmModal(message, onConfirm, icon, yesLabel){
+  document.getElementById('confirmModalMessage').textContent = message;
+  document.getElementById('confirmModalIcon').textContent = icon || '🗑️';
+  document.getElementById('confirmModalYes').textContent = yesLabel || t('btnYes');
+  document.getElementById('confirmModal').style.display = 'flex';
+  confirmModalCallback = onConfirm;
+}
+
+function hideConfirmModal(){
+  document.getElementById('confirmModal').style.display = 'none';
+  confirmModalCallback = null;
+}
+
+document.getElementById('confirmModalYes').addEventListener('click', () => {
+  const cb = confirmModalCallback;
+  hideConfirmModal();
+  if(cb) cb();
+});
+
+document.getElementById('confirmModalCancel').addEventListener('click', hideConfirmModal);
+
+document.getElementById('confirmModal').addEventListener('click', (e) => {
+  if(e.target.id === 'confirmModal') hideConfirmModal();
+});
+
+function showInfoModal(message, icon){
+  document.getElementById('infoModalMessage').textContent = message;
+  document.getElementById('infoModalIcon').textContent = icon || 'ℹ️';
+  document.getElementById('infoModal').style.display = 'flex';
+}
+function hideInfoModal(){
+  document.getElementById('infoModal').style.display = 'none';
+}
+document.getElementById('infoModalOk').addEventListener('click', hideInfoModal);
+document.getElementById('infoModal').addEventListener('click', (e) => {
+  if(e.target.id === 'infoModal') hideInfoModal();
+});
+
+document.getElementById('langSwitch').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-lang]');
+  if(!btn) return;
+  setLanguage(btn.dataset.lang);
+});
+
+// Register service worker for offline support + installability
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
+
+applyStaticTranslations();
+setTodayDate();
+renderAll();
+</script>
+</body>
+</html>
