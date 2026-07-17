@@ -1,7 +1,7 @@
 {
   "id": "/Rami-Calculator/",
-  "name": "Rami Calculator - حاسبة الرامي",
-  "short_name": "Rami | رامي",
+  "name": "Rami Calculator",
+  "short_name": "Rami",
   "description": "تطبيق لحساب نقاط لعبة الرمي بين الأصدقاء",
   "start_url": "./index.html",
   "scope": "./",
